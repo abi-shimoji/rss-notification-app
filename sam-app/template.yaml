@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: RSS通知アプリだよ🤗
+
+Globals:
+  Function:
+    Timeout: 20
+    MemorySize: 128
+
+Resources:
+  RssNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: rss-notification-function
+      CodeUri: rss_notification/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Policies:
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+      Layers:
+        - arn:aws:lambda:ap-northeast-1:133490724326:layer:AWS-Parameters-and-Secrets-Lambda-Extension:11
+      Environment:
+        Variables:
+          SLACK_ENDPOINT: "/rss-notification-app/slack/endpoint"
+          SLACK_API_KEY: "/rss-notification-app/slack/api-key"
+          SPREADSHEET_API_KEY: "/rss-notification-app/spreadsheet/api-key"
+          SPREADSHEET_API_URL: "https://sheets.googleapis.com/v4/spreadsheets"
+          SPREADSHEET_ID: "1jbMlV372yL_N0ySck74JI3TTBdh_Hex4GW4HbFGXMCw"
+          SPREADSHEET_LOG_ID: "1QMnR6Ejnxp8oQU-bjRJHsmWuci6lqrdLUOJ-fd-ZNg8"
+      # Events:      
+      #   ScheduleEvents:
+      #     Type: ScheduleV2
+      #     Properties:
+      #       Name: Rss-Notification-Schedule
+      #       ScheduleExpression: cron(30 9 * * 1)
+      #       Description: Rss Notification Schedule Events
+      #       ScheduleExpressionTimezone: "Asia/Tokyo"
+
+Outputs:
+  RssNotificationFunction:
+    Description: "Rss Notification Lambda Function ARN"
+    Value: !GetAtt RssNotificationFunction.Arn
+  RssNotificationFunctionIamRole:
+    Description: "Implicit IAM Role created for Rss Notification function"
+    Value: !GetAtt RssNotificationFunction.Arn
