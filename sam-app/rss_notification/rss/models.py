@@ -6,6 +6,7 @@ class RssInfo:
     name: str
     type: str
     endpoint: str
+    icon: str
 
 @dataclass
 class Article:

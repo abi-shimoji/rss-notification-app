@@ -9,6 +9,7 @@ class RssInfoIndex(IntEnum):
     name = 0
     type = 1
     endpoint = 2
+    icon = 3
 
 def get_rss_info() -> List[RssInfo]:
     """
@@ -33,7 +34,8 @@ def get_rss_info() -> List[RssInfo]:
             rss_info.append(RssInfo(
                 name=row[RssInfoIndex.name],
                 type=row[RssInfoIndex.type],
-                endpoint=row[RssInfoIndex.endpoint]
+                endpoint=row[RssInfoIndex.endpoint],
+                icon=row[RssInfoIndex.icon]
             ))
     else:
         print("失敗", response.status_code, response.text)
