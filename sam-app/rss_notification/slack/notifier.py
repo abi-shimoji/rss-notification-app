@@ -18,7 +18,7 @@ class SlackMessageAttachment:
     color: str
     fields: List[SlackMessageField]
 
-def send_slack(title: str, articles: List[Article]):
+def send_slack(title: str, icon: str, articles: List[Article]):
     """
     取得した記事をslackに投稿する
     
@@ -52,3 +52,58 @@ def send_slack(title: str, articles: List[Article]):
 
     if response.status_code != 200:
         raise Exception("Slack送信エラー")
+
+@dataclass
+class DiscordMessageFields:
+    name: str
+    value: str
+    inline: bool
+
+@dataclass
+class DiscordMessageEmbeds:
+    color: int
+    fields: List[DiscordMessageFields]
+
+@dataclass
+class DiscordMessageBody:
+    username: str
+    avatar_url: str
+    embeds: List[DiscordMessageEmbeds]
+
+def send_discord(title: str, icon: str, articles: List[Article]):
+    """
+    取得した記事をdiscordに投稿する
+
+    Parameters
+    ----------
+    articles : List[Article]
+        投稿する記事一覧
+    """
+    discord_message_fields: List[DiscordMessageFields] = []
+
+    for article in articles:
+        discord_message_fields.append(DiscordMessageFields(
+            name=article.title,
+            value=f"内容 : {article.description}\nリンク : {article.link}\n投稿日時 : {article.date}",
+            inline=False
+        ))
+
+    discord_message_embeds = DiscordMessageEmbeds(
+        color=int("00FF00", 16),  # "#00FF00" を整数に変換
+        fields=discord_message_fields
+    )
+
+    discord_message_body = DiscordMessageBody(
+        username=title,
+        avatar_url=icon,
+        embeds=[discord_message_embeds]
+    )
+
+    response = requests.post(
+        get_parameter_store(os.getenv("DISCORD_ENDPOINT")),  # DISCORD_ENDPOINT に変更するのがベスト
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(asdict(discord_message_body))
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Discord送信エラー: {response.status_code}, {response.text}")
