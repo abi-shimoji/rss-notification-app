@@ -1,11 +1,22 @@
 import json
 import os
 import requests
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from typing import List
-from .models import SlackMessageAttachment, SlackMessageField
 from rss.models import Article
 from storage.parameter_store import get_parameter_store
+
+@dataclass
+class SlackMessageField:
+    title: str
+    value: str
+
+@dataclass
+class SlackMessageAttachment:
+    fallback: str
+    text: str
+    color: str
+    fields: List[SlackMessageField]
 
 def send_slack(title: str, articles: List[Article]):
     """
@@ -20,7 +31,7 @@ def send_slack(title: str, articles: List[Article]):
 
     for article in articles:
         message_field = SlackMessageField(
-            title="",
+            title=title,
             value=f"内容 : {article.description}\nリンク : {article.link}\n投稿日時 : {article.date}"
         )
         attachment = SlackMessageAttachment(
