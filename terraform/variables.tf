@@ -1,3 +1,9 @@
+variable "discord_webhook_endpoint" {
+  description = "discord webhook endpoint"
+  type        = string
+  sensitive   = true
+}
+
 variable "slack_webhook_endpoint" {
   description = "slack webhook endpoint"
   type        = string

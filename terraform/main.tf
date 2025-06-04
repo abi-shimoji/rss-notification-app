@@ -2,6 +2,14 @@ provider "aws" {
   region = "ap-northeast-1"
 }
 
+resource "aws_ssm_parameter" "DISCORD_WEBHOOK_ENDPOINT" {
+  name        = "/rss-notification-app/discord/endpoint"
+  type        = "SecureString"
+  value       = var.discord_webhook_endpoint
+  description = "discord webhook endpoint"
+  overwrite   = true
+}
+
 resource "aws_ssm_parameter" "SLACK_WEBHOOK_ENDPOINT" {
   name        = "/rss-notification-app/slack/endpoint"
   type        = "SecureString"
