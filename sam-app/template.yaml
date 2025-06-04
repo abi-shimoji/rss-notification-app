@@ -2,12 +2,43 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: RSS通知アプリだよ🤗
 
+Parameters:
+  Env:
+    Type: String
+    Default: local
+  NotificationApp:
+    Type: String
+    AllowedValues:
+      - discord
+      - slack
+    Default: discord
+
 Globals:
   Function:
     Timeout: 20
     MemorySize: 128
+    Environment:
+      Variables:
+        ENV: !Ref Env
 
-Resources:
+Resources:  
+  RssQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: rss-notification-queue
+
+  RssTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: RssTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST  
+
   RssNotificationFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -17,18 +48,20 @@ Resources:
       Runtime: python3.9
       Architectures:
         - x86_64
-      Policies:
+      Policies: 
         - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess_v2
       Layers:
         - arn:aws:lambda:ap-northeast-1:133490724326:layer:AWS-Parameters-and-Secrets-Lambda-Extension:11
       Environment:
         Variables:
+          DISCORD_ENDPOINT: "/rss-notification-app/discord/endpoint"
           SLACK_ENDPOINT: "/rss-notification-app/slack/endpoint"
           SLACK_API_KEY: "/rss-notification-app/slack/api-key"
           SPREADSHEET_API_KEY: "/rss-notification-app/spreadsheet/api-key"
           SPREADSHEET_API_URL: "https://sheets.googleapis.com/v4/spreadsheets"
           SPREADSHEET_ID: "1jbMlV372yL_N0ySck74JI3TTBdh_Hex4GW4HbFGXMCw"
-          SPREADSHEET_LOG_ID: "1QMnR6Ejnxp8oQU-bjRJHsmWuci6lqrdLUOJ-fd-ZNg8"
+          NOTIFICATION_APP: !Ref NotificationApp
       # Events:      
       #   ScheduleEvents:
       #     Type: ScheduleV2
@@ -38,7 +71,51 @@ Resources:
       #       Description: Rss Notification Schedule Events
       #       ScheduleExpressionTimezone: "Asia/Tokyo"
 
+  RssRegistrationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: rss-registration-function
+      CodeUri: rss_registration/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Policies: 
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess_v2
+      Events:
+        SQSTrigger:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt RssQueue.Arn
+            BatchSize: 5
+
+  RssDeletionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: rss-deletion-function
+      CodeUri: rss_deletion/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Policies: 
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess_v2
+      # Events:      
+      #   ScheduleEvents:
+      #     Type: ScheduleV2
+      #     Properties:
+      #       Name: Rss-Deletion-Schedule
+      #       ScheduleExpression: cron(0 9 1 * *)
+      #       Description: Rss Notification Schedule Events
+      #       ScheduleExpressionTimezone: "Asia/Tokyo"
+
 Outputs:
+  RssTableArn:
+    Value: !GetAtt RssTable.Arn
+    Description: DynamoDB Table ARN
+  RssQueueArn:
+    Description: ARN of the SQS queue
+    Value: !GetAtt RssQueue.Arn
   RssNotificationFunction:
     Description: "Rss Notification Lambda Function ARN"
     Value: !GetAtt RssNotificationFunction.Arn
