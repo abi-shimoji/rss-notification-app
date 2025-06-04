@@ -18,6 +18,9 @@ def get_parameter_store(name: str) -> str:
     value : str
         パラメータの値
     """
+    if os.getenv("ENV") == "local":
+        return ""
+    
     headers = { "X-Aws-Parameters-Secrets-Token": aws_session_token }
     encoded_name = quote(name, safe='')
     endpoint = f"http://localhost:2773/systemsmanager/parameters/get?name={encoded_name}&withDecryption=true"
