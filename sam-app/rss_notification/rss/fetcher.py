@@ -4,7 +4,26 @@ from datetime import datetime
 from typing import List
 from .models import Article
 from .models import RssInfo
-from storage.registry import has_been_registered, register_article
+
+def _has_been_registered(service_name: str, article: Article) -> bool:
+    """
+    過去に投稿しているか確認する
+    
+    Parameters
+    ----------
+    service_name: str
+        RSSのサービス名
+    article : Article
+        投稿する記事
+    
+    Returns
+    -------
+    result : bool
+        True: 投稿済み
+        False: 未投稿
+    """
+    print("投稿済みチェック")
+    return False
 
 def get_rss(rss_info: RssInfo) -> List[Article]:
     """
@@ -35,8 +54,7 @@ def get_rss(rss_info: RssInfo) -> List[Article]:
             link=entry.link,
             date=pub_date_str
         )
-        if not has_been_registered(rss_info.name, article):
+        if not _has_been_registered(rss_info.name, article):
             articles.append(article)
-            register_article(rss_info.name,article)
 
     return articles
