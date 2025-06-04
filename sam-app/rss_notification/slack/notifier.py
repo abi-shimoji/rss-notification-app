@@ -50,7 +50,7 @@ def send_slack(title: str, icon: str, articles: List[Article]):
         data=json.dumps(payload)
     )
 
-    if response.status_code != 200:
+    if response.status_code not in (200, 204):
         raise Exception("Slack送信エラー")
 
 @dataclass
@@ -105,5 +105,5 @@ def send_discord(title: str, icon: str, articles: List[Article]):
         data=json.dumps(asdict(discord_message_body))
     )
 
-    if response.status_code != 200:
+    if response.status_code not in (200, 204):
         raise Exception(f"Discord送信エラー: {response.status_code}, {response.text}")
